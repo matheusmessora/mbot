@@ -1,0 +1,44 @@
+buildscript {
+	ext {
+		springBootVersion = '1.5.3.RELEASE'
+	}
+	repositories {
+		maven {
+			url = 'http://nexus.pagseguro.intranet/repository/public'
+		}
+		flatDir {
+			dirs 'libs'
+		}
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+	maven {
+		url = 'http://nexus.pagseguro.intranet/repository/public'
+	}
+	flatDir {
+		dirs 'libs'
+	}
+}
+
+
+dependencies {
+	compile 'com.github.austinv11:Discord4j:2.8.1-shaded'
+	compile('org.springframework.boot:spring-boot-starter')
+	compile("org.springframework.boot:spring-boot-starter-data-mongodb")
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+
+	// https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver
+//	compile group: 'org.mongodb', name: 'mongo-java-driver', version: '1.3'
+
+}
