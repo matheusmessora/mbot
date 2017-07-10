@@ -6,19 +6,26 @@ import br.matheusmessora.mbot.domain.author.DiscordAuthor;
 import br.matheusmessora.mbot.domain.message.MessageReceived;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by cin_mmessora on 5/30/17.
  */
 @Service
 public class Administrator {
 
-    private Author author;
+    private List<Author> admins;
     private String displayName;
 
     public void admin(DiscordServer discordServer) {
-        this.author = new DiscordAuthor(discordServer.client().getUsersByName("*").get(0), discordServer);
-//        this.author = new DiscordAuthor(discordServer.client().getUsersByName("_Cond_").get(0), discordServer);
-        this.displayName = author.displayName();
+        final DiscordAuthor marmita = new DiscordAuthor(discordServer.client().getUsersByName("MarmitaGames").get(0), discordServer);
+        final DiscordAuthor rafa = new DiscordAuthor(discordServer.client().getUsersByName("RafaSantos").get(0), discordServer);
+        this.admins = new ArrayList<>();
+        this.admins.add(marmita);
+        this.admins.add(rafa);
+
+        this.displayName = marmita.displayName();
     }
 
     public String displayName() {
@@ -26,10 +33,15 @@ public class Administrator {
     }
 
     public boolean sentbyAdmin(MessageReceived received) {
-        return received.getAuthor().equals(author);
+        for (Author admin : admins) {
+            if(received.getAuthor().equals(admin)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public Author getAuthor() {
-        return author;
+        return admins.get(0);
     }
 }

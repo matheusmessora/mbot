@@ -6,18 +6,20 @@ import br.matheusmessora.mbot.domain.MessageSender;
 import br.matheusmessora.mbot.domain.author.Author;
 import br.matheusmessora.mbot.domain.command.Command;
 import br.matheusmessora.mbot.domain.message.MessageReceived;
-import br.matheusmessora.mbot.games.ranking.RankingService;
+import br.matheusmessora.mbot.games.BaseGameEvent;
+import br.matheusmessora.mbot.games.Events;
+import br.matheusmessora.mbot.games.GameEvent;
+import br.matheusmessora.mbot.games.MessageReceivedListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -25,7 +27,7 @@ import java.util.function.Function;
  * Created by cin_mmessora on 5/30/17.
  */
 @Service
-public class Arena1v1Service {
+public class Arena1v1Service extends BaseGameEvent implements GameEvent, MessageReceivedListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Arena1v1Service.class);
     public static final int SECONDS_TO_JOIN = 25;
@@ -42,23 +44,21 @@ public class Arena1v1Service {
     @Autowired
     private BattleService battleService;
 
-    @Autowired
-    private RankingService rankingService;
-
-    private String JOIN_MESSAGE = "Hora do duelo!!! Entre na arena e participe do x1 do Marmita. Digite !participar para participar";
+    private String JOIN_MESSAGE = "*Hora do duelo!!! Entre na arena e participe do x1 do Marmita. Digite **!participar** para participar. \n Você tem 3 minutos para participar.*";
     private Command START_COMMAND = new Command("arena");
     private Command RESET_COMMAND = new Command("arena reset");
-    private Command FIGHT_COMMAND = new Command("lutar");
+    private Command FIGHT_COMMAND = new Command("arena on");
     private Command JOIN_COMMAND = new Command("participar");
-    private Battle battle;
 
     private Set<Author> users;
-    private Optional<LocalDateTime> startedAt;
     private List<Function<MessageReceived, Boolean>> steps;
+
+    private boolean joinable;
+    private int counts = 0;
 
     @PostConstruct
     public void init() {
-        reset();
+        closeEvent();
 
         steps = new ArrayList<>();
         steps.add(startEventFunction());
@@ -68,36 +68,65 @@ public class Arena1v1Service {
         steps.add(resetFunction());
     }
 
-    public void reset() {
-        users = new HashSet<>();
-        startedAt = Optional.empty();
-        battle = null;
-        battleService.reset();
-    }
-
     public void doTask(MessageReceived event) {
         for (Function<MessageReceived,Boolean> step : steps) {
             if(step.apply(event)){
                 break;
             }
         }
+
+        if(started && !joinable && !battleService.hasMoreBattles()){
+            closeEvent();
+        }
     }
 
     private Function<MessageReceived, Boolean> startEventFunction() {
         return (MessageReceived received) -> {
             if(admin.sentbyAdmin(received) && START_COMMAND.match(received.getMessage())){
-                messageSender.send(JOIN_MESSAGE);
-                startedAt = Optional.of(LocalDateTime.now());
-                LOGGER.info("games=arena1v1,step=started");
-                return true;
+                return startEvent();
             }
             return false;
         };
     }
 
+    public boolean startEvent() {
+        messageSender.send(JOIN_MESSAGE);
+        LOGGER.info("games=arena1v1,step=start");
+        joinable = true;
+        started = true;
+        counts = 0;
+        return true;
+    }
+
+    @Override
+    public boolean closeEvent() {
+        users = new HashSet<>();
+        joinable = false;
+        battleService.reset();
+        LOGGER.info("games=arena1v1,step=close");
+        return true;
+    }
+
+    @Override
+    public boolean nextPhase() {
+        counts++;
+        if(started && joinable && counts >= 3){
+            LOGGER.info("games=arena1v1,step=battle,batltes=" + battleService.battles);
+            battleService.start();
+            joinable = false;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Events eventType() {
+        return Events.AREA_1v1;
+    }
+
     private Function<MessageReceived, Boolean> skillFunction() {
         return (MessageReceived received) -> {
-            if(battleService.isStarted()){
+            if(started && battleService.isStarted()){
                 if(battleService.skill(received)){
                     return true;
                 }
@@ -109,20 +138,14 @@ public class Arena1v1Service {
     private Function<MessageReceived, Boolean> resetFunction() {
         return (MessageReceived received) -> {
             if(admin.sentbyAdmin(received) && RESET_COMMAND.match(received.getMessage())){
-                reset();
-                LOGGER.info("games=arena1v1,step=finished");
-                this.init();
-                return true;
+                closeEvent();
             }
             return false;
         };
     }
 
     private boolean isJoinable() {
-        if(startedAt.isPresent()){
-            return true;
-        }
-        return false;
+        return joinable;
     }
 
     private Function<MessageReceived, Boolean> joinFunction() {
@@ -132,7 +155,7 @@ public class Arena1v1Service {
                     final Author author = received.getAuthor();
                     if(users.add(author)) {
                         battleService.add(author);
-                        messageSender.send(author.displayName() + " está participando da Arena 1x1.");
+                        messageSender.send("*" + author.displayName() + " está participando da Arena 1x1.*");
                         LOGGER.info("games=arena1v1,step=join,player=" + author.displayName());
                     }
                     return true;
@@ -147,9 +170,7 @@ public class Arena1v1Service {
 
             if(isJoinable() && !battleService.isStarted()){
                 if(admin.sentbyAdmin(received) && FIGHT_COMMAND.match(received.getMessage())) {
-                    LOGGER.info("games=arena1v1,step=battle,batltes=" + battleService.battles);
-                    battleService.start();
-                    return true;
+                    nextPhase();
                 }
             }
             return false;
@@ -164,4 +185,11 @@ public class Arena1v1Service {
                 content.equalsIgnoreCase("agua");
     }
 
+    @Override
+    @EventListener
+    public void handle(MessageReceived event) {
+        if(true){
+            doTask(event);
+        }
+    }
 }

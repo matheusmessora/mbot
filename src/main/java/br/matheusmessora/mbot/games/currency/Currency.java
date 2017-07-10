@@ -37,6 +37,13 @@ public class Currency {
         return balance;
     }
 
+    public void decrease(int quantity){
+        balance -= quantity;
+        if(balance < 0){
+            balance = 0;
+        }
+    }
+
     public void setBalance(Integer balance) {
         this.balance = balance;
     }

@@ -1,10 +1,11 @@
-package br.matheusmessora.mbot.games.followme;
+package br.matheusmessora.mbot.games.feedme;
 
 import br.matheusmessora.mbot.domain.Administrator;
 import br.matheusmessora.mbot.domain.MessageSender;
 import br.matheusmessora.mbot.domain.command.Command;
 import br.matheusmessora.mbot.domain.message.MessageReceived;
 import br.matheusmessora.mbot.events.AuthorParticipationEvent;
+import br.matheusmessora.mbot.events.PunishimentEvent;
 import br.matheusmessora.mbot.games.BaseGameEvent;
 import br.matheusmessora.mbot.games.Events;
 import br.matheusmessora.mbot.games.GameEvent;
@@ -16,14 +17,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
 import java.util.Random;
 
 /**
  * Created by cin_mmessora on 6/2/17.
  */
 @Service
-public class FollowMeCommandListener extends BaseGameEvent implements MessageReceivedListener, GameEvent {
+public class FeedmeCommandListener extends BaseGameEvent implements MessageReceivedListener, GameEvent {
 
     @Autowired
     private CurrencyService service;
@@ -37,27 +37,22 @@ public class FollowMeCommandListener extends BaseGameEvent implements MessageRec
     @Autowired
     private ApplicationEventPublisher publisher;
 
-    private Command START_COMMAND = new Command("mestre");
-    private Command NEXT_COMMAND = new Command("mestre next");
-    private Command RESET_COMMAND = new Command("mestre reset");
+    private Command START_COMMAND = new Command("feedme");
+    private Command NEXT_COMMAND = new Command("feedme next");
+    private Command RESET_COMMAND = new Command("feedme reset");
     private int counts = 0;
-
-    private Optional<Command> selectedCommand;
     private Command[] orders = {
-            new Command("estatua"),
-            new Command("feijoada"),
-            new Command("MarmitaGames"),
-            new Command("temaki"),
-            new Command("macarronada"),
-            new Command("esfiha")
+            new Command("agua"),
+            new Command("suco"),
+            new Command("refrigerante"),
 
     };
     private Random random = new Random();
 
+
     @PostConstruct
     public void init() {
         random = new Random();
-        setSelectedCommand(null);
     }
 
     @EventListener
@@ -76,16 +71,16 @@ public class FollowMeCommandListener extends BaseGameEvent implements MessageRec
     }
 
     private synchronized void commandReceived(MessageReceived event) {
-        getSelectedCommand().ifPresent(command -> {
-            if(command.match(event)){
-                sender.send(event.getAuthor().mention() + " foi o mais rápido!");
-                publisher.publishEvent(new AuthorParticipationEvent(event.getAuthor(), 1));
-                setSelectedCommand(null);
-                if(counts > 4){
+        for (Command order : orders) {
+            if(order.match(event)){
+                sender.send(event.getAuthor().mention() + " ufa, obrigada. Estava morrendo de sede :kiss:!");
+                publisher.publishEvent(new AuthorParticipationEvent(event.getAuthor(), 3));
+                publisher.publishEvent(new PunishimentEvent(2));
+                if(counts > 0){
                     closeEvent();
                 }
             }
-        });
+        }
     }
 
     @EventListener
@@ -107,26 +102,24 @@ public class FollowMeCommandListener extends BaseGameEvent implements MessageRec
     @Override
     public boolean startEvent() {
         started = true;
-        sender.send("Hora de **O Mestre Mandou**! Fique atento no chat e repita o comando. O mais rápido ganhará sapos de chocolate.");
+        counts = 0;
+        sender.send("*Marmitinhas, estou com sede... Envie !suco, !agua ou !refrigerante para mim. Rapido!*");
+        nextPhase();
         return true;
     }
 
     @Override
     public boolean closeEvent() {
-        setSelectedCommand(null);
         started = false;
         counts = 0;
-        sender.send("*Chega de o Mestre MANDOU.... por enquanto*");
+        sender.send("*Estou satisfeita, por enquanto... :yum:*");
         return true;
     }
 
     @Override
     public boolean nextPhase() {
-        if(!getSelectedCommand().isPresent() && started){
+        if(started){
             counts++;
-            final int i = random.nextInt(orders.length);
-            selectedCommand = Optional.of(orders[i]);
-            sender.send("Mestre MANDOU... **!" + selectedCommand.get().value() + "** , seja o mais rápido e repita o comando! VAMOS");
             return true;
         }
         return false;
@@ -134,7 +127,7 @@ public class FollowMeCommandListener extends BaseGameEvent implements MessageRec
 
     @Override
     public Events eventType() {
-        return Events.FOLLOW_ME;
+        return Events.FEEDME;
     }
 
     @Override
@@ -142,11 +135,4 @@ public class FollowMeCommandListener extends BaseGameEvent implements MessageRec
         return eventType().isActive();
     }
 
-    public synchronized Optional<Command> getSelectedCommand() {
-        return selectedCommand;
-    }
-
-    public synchronized void setSelectedCommand(Command selectedCommand) {
-        this.selectedCommand = Optional.ofNullable(selectedCommand);
-    }
 }

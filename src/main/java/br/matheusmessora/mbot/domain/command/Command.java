@@ -29,4 +29,9 @@ public class Command {
     public boolean match(MessageReceived event) {
         return event.getMessage().equalsIgnoreCase("!" + command);
     }
+
+    public boolean matchWithValue(MessageReceived event) {
+        final String command = event.getMessage().split(" ", 2)[0];
+        return command.equalsIgnoreCase("!" + this.command);
+    }
 }

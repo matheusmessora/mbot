@@ -9,8 +9,4 @@ public interface MessageReceivedListener {
 
     void handle(MessageReceived event);
 
-    Events eventType();
-
-    boolean isON();
-
 }

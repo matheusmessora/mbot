@@ -40,6 +40,16 @@ public class CurrencyService {
         messageSender.sendPM(author, "Você acaba de ganhar " + amount + " sapos de chocolate. Digite !chocolate para saber o seu total.");
     }
 
+    public void decrease(Author author, int amount) {
+        Currency currency = getOne(author);
+        int newBalance = currency.getBalance() - amount;
+        if(newBalance < 0){
+            newBalance = 0;
+        }
+        currency.setBalance(newBalance);
+        mongoCurrencyRepository.save(currency);
+    }
+
     private Currency getOne(Author author) {
         final Currency one = mongoCurrencyRepository.findOne(author.uid());
         if (one == null) {
@@ -50,5 +60,9 @@ public class CurrencyService {
 
     public void cleanUp() {
         mongoCurrencyRepository.deleteAll();
+    }
+
+    public void saveAll(List<Currency> all) {
+        mongoCurrencyRepository.save(all);
     }
 }
