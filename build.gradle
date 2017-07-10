@@ -33,14 +33,10 @@ repositories {
 
 
 dependencies {
-	compile 'com.github.austinv11:Discord4j:2.8.1-shaded'
 	compile('org.springframework.boot:spring-boot-starter')
+	compile('org.springframework.boot:spring-boot-starter-web')
 	compile("org.springframework.boot:spring-boot-starter-data-mongodb")
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	compile group: 'com.google.guava', name: 'guava', version: '11.0.2'
-
-
-	// https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver
-//	compile group: 'org.mongodb', name: 'mongo-java-driver', version: '1.3'
 
 }
