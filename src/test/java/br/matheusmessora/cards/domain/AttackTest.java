@@ -2,6 +2,7 @@ package br.matheusmessora.cards.domain;
 
 import br.matheusmessora.cards.commands.AttackMinion;
 import br.matheusmessora.cards.commands.AttackPlayer;
+import br.matheusmessora.cards.commands.AttackScala;
 import br.matheusmessora.cards.exception.TiredMonster;
 import org.junit.Before;
 import org.junit.Test;

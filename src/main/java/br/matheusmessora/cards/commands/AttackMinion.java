@@ -5,7 +5,7 @@ import br.matheusmessora.cards.domain.Card;
 /**
  * Created by cin_mmessora call 7/10/17.
  */
-public class AttackMinion implements Command {
+public class AttackMinion implements ICommand{
 
     private int fieldIndex;
     private Card target;

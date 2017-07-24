@@ -25,3 +25,10 @@ hs_err_pid*
 
 .idea/
 *.iml
+
+gradlew
+gradlew.bat
+.gradle/
+build/
+gradle/
+mbot.iml

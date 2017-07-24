@@ -1,6 +1,6 @@
 package br.matheusmessora.cards.domain
 
-import br.matheusmessora.cards.commands.InvokeCard
+import br.matheusmessora.cards.commands._
 import org.scalatest._
 
 
@@ -9,39 +9,38 @@ import org.scalatest._
   */
 class GameTestNG extends FunSuite with Matchers with BeforeAndAfter {
 
-	var game: GameScala = _
-
-	before {
-		game = new GameScala
-		game.start()
-	}
-
 	test("Should start game") {
-		val currentPlayer = game.currentPlayer
+		var game = GameScala().start()
+
+		val currentPlayer = game.current
 		currentPlayer.life shouldBe 30
 		currentPlayer.deck.size shouldBe 25
 		currentPlayer.hand.size shouldBe 5
 
 		val enemy = game.enemy
 		enemy.life shouldBe 30
-		enemy.deck.size shouldBe 25
-		enemy.hand.size shouldBe 5
+		enemy.deck.size shouldBe 26
+		enemy.hand.size shouldBe 4
 	}
 
 	test("First Player should Summond card") {
-		game.action(new InvokeCard(_position = 0))
+		var game = GameScala().start()
+		game = game.action(InvokeCard(0))
 
-		game.currentPlayer.hand.size shouldBe 4
-		game.currentPlayer.field.size shouldBe 1
+		game.current.hand.size shouldBe 4
+		game.current.field.size shouldBe 1
 	}
 
-	test("Second player should summond card after first one") {
-		game.endTurn()
+	test("Second player should summon card after first one") {
+		val game = GameScala()
+			.start()
+			.endTurn()
+
 		game.enemy.hand.size shouldBe 5
 
-		game.action(new InvokeCard(_position = 0))
-		game.currentPlayer.hand.size shouldBe 4
-		game.currentPlayer.field.size shouldBe 1
+		val result = game.action(InvokeCard(0))
+		result.current.hand.size shouldBe 4
+		result.current.field.size shouldBe 1
 	}
 
 

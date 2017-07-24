@@ -62,9 +62,9 @@ public class Game {
         }
     }
 
-    public void call(AttackPlayer attackMinion){
-        final Card attacker = currentPlayer().field(attackMinion.fieldIndex());
-        final Live target = attackMinion.target();
+    public void call(AttackPlayer attackPlayer){
+        final Card attacker = currentPlayer().field(attackPlayer.fieldIndex());
+        final Live target = attackPlayer.target();
 
         attacker.attack();
         target.receiveDamage(attacker.power());

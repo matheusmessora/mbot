@@ -5,7 +5,7 @@ import br.matheusmessora.cards.domain.Player;
 /**
  * Created by cin_mmessora call 7/10/17.
  */
-public class AttackPlayer implements Command {
+public class AttackPlayer implements ICommand {
 
     private int fieldIndex;
     private Player target;

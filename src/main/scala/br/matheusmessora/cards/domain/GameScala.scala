@@ -1,44 +1,28 @@
 package br.matheusmessora.cards.domain
 
-import br.matheusmessora.cards.commands.InvokeCard
+import br.matheusmessora.cards.commands.{AttackScala, CommandScala, InvokeCard}
+
 
 /**
   * Created by cin_mmessora on 7/11/17.
   */
-class GameScala(private val _bluePlayer: PlayerScala = new PlayerScala,
-                private val _redPlayer: PlayerScala = new PlayerScala){
+case class GameScala(current: PlayerScala = PlayerScala("blue"),
+										 enemy: PlayerScala = PlayerScala("red")){
 
-	def endTurn() = {
-		if(currentPlayer == _bluePlayer){
-			_current = _redPlayer
-		}else {
-			_current = _bluePlayer
-		}
+  def endTurn(): GameScala = copy(enemy.start(), current)
 
-		_current.start()
-	}
+  def action(command: CommandScala): GameScala = command match {
+    case InvokeCard(position) => {
+      copy(current.invokeCard(position), enemy)
+    }
 
-	def action(command: InvokeCard) = {
-		_current.action(command)
-	}
+    case command: AttackScala =>
+      val selectedCard = current.field.apply(command.position)
+      copy(current, command.target.receiveDamage(selectedCard.power))
 
-	def start(): Unit = {
-		_current = _bluePlayer
+    case _ => throw new IllegalStateException() // TODO: refactoring
+  }
 
-		_bluePlayer.start()
-	}
-
-	def enemy: PlayerScala = {
-		if(_current == _bluePlayer){
-			_redPlayer
-		}
-		_bluePlayer
-	}
-
-	def currentPlayer: PlayerScala = _current
-
-	private var _current: PlayerScala = _bluePlayer
-
-
+	def start(): GameScala = copy(current.drawCard(5), enemy.drawCard(4))
 
 }
